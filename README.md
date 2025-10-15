@@ -13,15 +13,15 @@ docker compose exec php ash
 composer create-project symfony/skeleton app
 cd app
 composer require api symfony/framework-bundle symfony/orm-pack symfony/messenger symfony/validator symfony/http-client symfony/mime symfony/filesystem symfony/serializer
-composer require doctrine/doctrine-bundle
 composer require league/flysystem-bundle
-composer require phpoffice/phpspreadsheet # XLSX/ODS parsing
 composer require --dev phpunit/phpunit symfony/test-pack symfony/maker-bundle
 
 docker compose exec php composer install
 docker compose exec php php bin/console doctrine:migrations:diff
 docker compose exec php php bin/console doctrine:migrations:migrate -n
 ```
+
+check reqs: symfony check:requirements
 
 
 ## change xdebug mode on the fly
