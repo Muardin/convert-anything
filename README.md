@@ -4,14 +4,10 @@ The goal is to convert any uploaded file into another output format.
 Supported file types in input are: CSV, JSON, XLSX, and ODS.
 Output file formats are: JSON an
 
-
-
 # Symfony Docker
 
 A [Docker](https://www.docker.com/)-based installer and runtime for the [Symfony](https://symfony.com) web framework,
 with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) inside!
-
-![CI](https://github.com/dunglas/symfony-docker/workflows/CI/badge.svg)
 
 ## Getting Started
 
@@ -24,13 +20,17 @@ with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) 
 ### install important vendors
 ```
 docker compose exec php bash
-composer require symfony/orm-pack api symfony/messenger symfony/validator symfony/http-client symfony/mime symfony/filesystem symfony/serializer
+composer require symfony/orm-pack api symfony/messenger symfony/doctrine-messenger symfony/validator symfony/http-client symfony/mime symfony/filesystem symfony/serializer
+composer require league/flysystem-bundle
 composer require --dev phpunit/phpunit symfony/test-pack symfony/maker-bundle
 
+# database stuff
+php bin/console doctrine:database:create --if-not-exists
 php bin/console doctrine:migrations:migrate -n
+php bin/console doctrine:database:create --env=test --if-not-exists
+php bin/console doctrine:migrations:migrate --env=test
 
 # not required?
-composer require league/flysystem-bundle
 composer require phpoffice/phpspreadsheet # XLSX/ODS parsing
 ```
 
@@ -39,23 +39,19 @@ Browse via http://localhost/api
 Create resource
 `php bin/console make:entity --api-resource`
 
-## Features
 
-- Production, development and CI ready
-- Just 1 service by default
-- Blazing-fast performance thanks to [the worker mode of FrankenPHP](https://frankenphp.dev/docs/worker/)
-- [Installation of extra Docker Compose services](docs/extra-services.md) with Symfony Flex
-- Automatic HTTPS (in dev and prod)
-- HTTP/3 and [Early Hints](https://symfony.com/blog/new-in-symfony-6-3-early-hints) support
-- Real-time messaging thanks to a built-in [Mercure hub](https://symfony.com/doc/current/mercure.html)
-- [Vulcain](https://vulcain.rocks) support
-- Native [XDebug](docs/xdebug.md) integration
-- Super-readable configuration
+## Notes
+docker compose up -d
+php bin/console make:migration
+rm -rf var/cache/test var/cache/dev && php ./vendor/bin/phpunit --testdox
 
-**Enjoy!**
+
+
+
+
+
 
 ## Docs
-
 1. [Options available](docs/options.md)
 2. [Using Symfony Docker with an existing project](docs/existing-project.md)
 3. [Support for extra services](docs/extra-services.md)
