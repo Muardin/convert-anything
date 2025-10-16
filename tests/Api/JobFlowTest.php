@@ -9,6 +9,7 @@ final class JobFlowTest extends WebTestCase
 {
     public function test_convert_csv_to_json(): void
     {
+        $timeStart = microtime(true);
         $client = self::createClient([], ['HTTP_ACCEPT' => 'application/json']);
 
         $csv = tempnam(sys_get_temp_dir(), 'csv');
@@ -38,7 +39,6 @@ final class JobFlowTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSame('application/json', $client->getResponse()->headers->get('content-type'));
 
-
         $data = json_decode($client->getResponse()->getContent(), true, JSON_THROW_ON_ERROR);
         $this->assertIsArray($data);
         // simple content check
@@ -46,5 +46,7 @@ final class JobFlowTest extends WebTestCase
             ['a' => '1', 'b' => '2'],
             ['a' => '3', 'b' => '4'],
         ], $data);
+
+        dd('time consumed:' . (microtime(true) - $timeStart) . 'sec');
     }
 }

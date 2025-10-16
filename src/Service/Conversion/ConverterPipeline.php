@@ -24,6 +24,7 @@ final class ConverterPipeline
         $writer = $this->outputFactory->for(OutputFormat::from($out));
 
         $rows = $parser->parseAsStream($inputPath);
+        sleep(10); // simulate large file
 
         $tmp = tmpfile();
         $writer->writeAsStream($rows, $tmp);
