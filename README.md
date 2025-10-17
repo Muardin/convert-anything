@@ -1,24 +1,44 @@
-# convert-anything
+# convert-anything (MVP)
 
 The goal is to convert any uploaded file into another output format.
-Supported file types in input are: CSV, JSON, XLSX, and ODS.
-Output file formats are: JSON an
+Since it's an MVP, it comes with limited supported types, but will be easy to extend this.
 
-# Symfony Docker
+Supported file types in input are: 
+* [CSV](src/Service/Conversion/InputParser/CsvInputParser.php)
 
-A [Docker](https://www.docker.com/)-based installer and runtime for the [Symfony](https://symfony.com) web framework,
-with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) inside!
+Output file formats are:
+* [JSON](src/Service/Conversion/OutputWriter/JsonWriter.php)
 
-## Getting Started
+## Workflow
+- Upload any supported file via POST /jobs. Payload: 
+  - file = the file to be converted
+  - output = the format you want to convert to e.g. json
+- save file and create a [database entry](src/Entity/ConversionJob.php) to track progress, ConversionJob.status = 'queued'
+- [async job](src/MessageHandler/RunConversionHandler.php) will start and grab one entry
+  - sets ConversionJob.status = 'running', to prevent having multiple Jobs working on the same entry
+- [Converter](src/Service/Conversion/ConverterPipeline.php) will do the conversion in following steps:
+  - [Parse input file](src/Service/Conversion/InputParser/InputParserFactory.php) based on file extension
+  - [write a new file](src/Service/Conversion/OutputWriter/OutputWriterFactory.php) based on the given `output` of the POST call
+  - save new ConversionJob.status ('failed' or 'done')
+- User can track conversion via GET /jobs/{id}
+- Once conversion is done, the file can be downloaded via GET /jobs/{id}/result
 
-1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
-2. Run `docker compose build --pull --no-cache` to build fresh images
-3. Run `docker compose up --wait` to set up and start a fresh Symfony project
-4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
-5. Run `docker compose down --remove-orphans` to stop the Docker containers.
+## What's next
+- Support multiple way to convert files, not just via API (move logic from Controller into a Service) 
+- support more input- and output-formats:
+  - openspout/openspout for XLS/ODS
+- config option for the different InputParsers and OutputWriters e.g. define different separator for CSV
+- `size-aware workers`: improve runtimes for large files, e.g. by having different queues (with different CPU/RAM) for different file sizes
 
-### install important vendors
+
+## Setup
+
+### Init
 ```
+docker compose build --pull --no-cache
+docker compose up -d --wait
+
+# install vendors
 docker compose exec php bash
 composer require symfony/orm-pack api symfony/messenger symfony/doctrine-messenger symfony/validator symfony/http-client symfony/mime symfony/filesystem symfony/serializer
 composer require league/flysystem-bundle
@@ -26,32 +46,21 @@ composer require --dev phpunit/phpunit symfony/test-pack symfony/maker-bundle
 
 # database stuff
 php bin/console doctrine:database:create --if-not-exists
-php bin/console doctrine:migrations:migrate -n
+php bin/console doctrine:migrations:migrate
 php bin/console doctrine:database:create --env=test --if-not-exists
 php bin/console doctrine:migrations:migrate --env=test
-
-# not required?
-composer require phpoffice/phpspreadsheet # XLSX/ODS parsing
 ```
 
-## API-Platform
-Browse via http://localhost/api
-Create resource
-`php bin/console make:entity --api-resource`
+### Notes
+* Web access: `https://localhost` and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
+* Build a migration: `php bin/console make:migration`
+* Run tests: `rm -rf var/cache/test var/cache/dev && php ./vendor/bin/phpunit --testdox`
 
 
-## Notes
-docker compose up -d
-php bin/console make:migration
-rm -rf var/cache/test var/cache/dev && php ./vendor/bin/phpunit --testdox
+## Base on Symfony Docker
+Based on [Symfony Docker](https://github.com/dunglas/symfony-docker)
 
-
-
-
-
-
-
-## Docs
+### Docs
 1. [Options available](docs/options.md)
 2. [Using Symfony Docker with an existing project](docs/existing-project.md)
 3. [Support for extra services](docs/extra-services.md)

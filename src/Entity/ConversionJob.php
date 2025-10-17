@@ -20,10 +20,10 @@ class ConversionJob
     private string $status = self::STATUS_QUEUED;
 
     #[ORM\Column(length: 8)]
-    private string $inputType; // csv|json|xlsx|ods
+    private string $inputType;
 
     #[ORM\Column(length: 8)]
-    private string $outputType; // json|xml
+    private string $outputType;
 
     #[ORM\Column(length: 255)]
     private string $inputPath;
